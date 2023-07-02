@@ -3,8 +3,11 @@ import { validateJWT } from './tokens';
 const corsHeaders = {
 	'Access-Control-Allow-Origin': '*',
 	'Access-Control-Allow-Methods': 'HEAD,PUT,OPTIONS',
-	'Access-Control-Max-Age': '86400',
-	'Access-Control-Allow-Headers': 'Accept,Content-Type,Authorization'
+	'Access-Control-Max-Age': '7200',
+	'Access-Control-Allow-Headers': 'Accept,Content-Type,Authorization',
+	'Accept': 'application/json',
+	'Content-Type': 'application/json;charset=UTF-8',
+	'Cache-Control': 'no-cache'
 };
 
 async function storeUserAnswers({ user, answers }, userDB) {
