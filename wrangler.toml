@@ -1,0 +1,4 @@
+name = "quiz-api"
+main = "src/router.js"
+compatibility_date = "2023-07-01"
+
