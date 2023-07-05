@@ -1,7 +1,7 @@
 import { validateJWT } from './tokens';
 
 const corsHeaders = {
-	'Access-Control-Allow-Origin': '*',
+	'Access-Control-Allow-Origin': ORIGINS,
 	'Access-Control-Allow-Methods': 'HEAD,PUT,OPTIONS',
 	'Access-Control-Max-Age': '7200',
 	'Access-Control-Allow-Headers': 'Accept,Content-Type,Authorization',

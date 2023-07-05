@@ -5,3 +5,4 @@ kv_namespaces = [
 	{ binding = "USERS", id = "ee21c09c059a42a9acebfe7125de6906", preview_id = "ee21c09c059a42a9acebfe7125de6906" },
 	{ binding = "QUESTIONS", id = "0bd7e78510cb48578be1428d9ad2069e", preview_id = "0bd7e78510cb48578be1428d9ad2069e" }
 ]
+vars = { ORIGINS = "{ YOUR DOMAIN }" }
