@@ -1,6 +1,6 @@
 import { createJWT } from './tokens';
 
-const corsHeaders = {
+export const tHeaders = {
 	'Access-Control-Allow-Origin': ORIGINS,
 	'Access-Control-Allow-Methods': 'HEAD,PUT,OPTIONS',
 	'Access-Control-Max-Age': '7200',
@@ -14,29 +14,37 @@ const corsHeaders = {
 export async function teamsPut(request) {
 	// Verify JSON data
 	if (request.headers.get('Content-Type') !== 'application/json')
-		return new Response(null, { status: 406, headers: corsHeaders });
+		return new Response(null, { status: 406, headers: tHeaders });
+
+	// Fetch username from req body
 	const { user } = await request.json();
-	const userDB = USERS;
+
+	// Init user DB
+	let userDB;
+	try {
+		userDB = USERS;
+	} catch (e) {
+		return new Response(null, { status: 502, headers: tHeaders });
+	}
+
 	// Verify USER element set
 	if (user === null) return new Response(JSON.stringify({ error: 'No user specified' }), {
 		status: 422,
-		headers: corsHeaders
+		headers: tHeaders
 	});
+
 	// Verify username isn't taken
 	if (await userDB.get(`user:${user}`)) return new Response(JSON.stringify({ error: 'User already exists' }), {
-		status: 409, headers: corsHeaders
+		status: 409, headers: tHeaders
 	});
+
 	const { secret, token } = await createJWT(user);
+
 	try {
 		await userDB.put(`user:${user}`, JSON.stringify({ secret: secret, answers: {} }), { expirationTtl: 2 * 60 * 60 });
-		return new Response(JSON.stringify({ token: token }), { status: 201, headers: corsHeaders });
+		return new Response(JSON.stringify({ token: token }), { status: 201, headers: tHeaders });
 	} catch (error) {
-		console.log(error);
-		return new Response(null, { status: 500, headers: corsHeaders });
+		console.error(error);
+		return new Response(null, { status: 500, headers: tHeaders });
 	}
-}
-
-// OPTIONS request
-export function teamsOptions() {
-	return new Response(null, { status: 204, headers: corsHeaders });
 }

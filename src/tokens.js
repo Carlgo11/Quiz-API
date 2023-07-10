@@ -1,13 +1,13 @@
-import jwt from "@tsndr/cloudflare-worker-jwt";
+import jwt from '@tsndr/cloudflare-worker-jwt';
 
 export async function validateJWT(request, userDB) {
 	try {
-		const token = request.headers.get('Authorization').split('Bearer ')[1]
-		const {user} = jwt.decode(token)
-		const {secret} = await userDB.get(`user:${user}`, {type: 'json'})
+		const token = request.headers.get('Authorization').split('Bearer ')[1];
+		const { user } = jwt.decode(token).payload;
+		const { secret } = await userDB.get(`user:${user}`, { type: 'json' });
 		if (await jwt.verify(token, secret)) return user
 	} catch (error) {
-		console.log(error)
+		console.error(error);
 	}
 	return false;
 }

@@ -1,6 +1,6 @@
 import { validateJWT } from './tokens';
 
-const corsHeaders = {
+export const qHeaders = {
 	'Access-Control-Allow-Origin': ORIGINS,
 	'Access-Control-Allow-Methods': 'GET,OPTIONS',
 	'Access-Control-Max-Age': '7200',
@@ -26,14 +26,23 @@ async function getAvailableQuestions(questionDB) {
 
 // GET request
 export async function questionsGet(request) {
-	const questionDB = QUESTIONS;
-	const userDB = USERS;
-	const user = await validateJWT(request, userDB);
-	if (!user) return new Response(null, { status: 401, headers: corsHeaders });
-	return new Response(JSON.stringify(await getAvailableQuestions(questionDB)), { headers: corsHeaders });
-}
+	// Verify expected res Content-Type eql JSON
+	if (request.headers.get('Accept') !== 'application/json')
+		return new Response(null, { status: 406, headers: qHeaders });
 
-// OPTIONS request
-export function questionsOptions() {
-	return new Response(null, { status: 204, headers: corsHeaders });
+	// Init question and user DB
+	let questionDB
+	let userDB
+	try {
+		questionDB = QUESTIONS;
+		userDB = USERS;
+	} catch (e) {
+		return new Response(JSON.stringify({ error: 'Database error' }), { status: 502, headers: qHeaders });
+	}
+
+	// Fetch username from JWT
+	const user = await validateJWT(request, userDB);
+	if (!user) return new Response(null, { status: 401, headers: qHeaders });
+
+	return new Response(JSON.stringify(await getAvailableQuestions(questionDB)), { headers: qHeaders });
 }
