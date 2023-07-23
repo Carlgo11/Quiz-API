@@ -1,6 +1,6 @@
 import { createJWT } from './tokens';
+import bcrypt from '@jswebfans/bcryptjs';
 
-const bcrypt = require('bcryptjs');
 export const adHeaders = {
 	'Access-Control-Allow-Origin': ORIGINS,
 	'Access-Control-Allow-Methods': 'PUT,POST,OPTIONS',
@@ -28,7 +28,9 @@ export async function verifyAdmin(request) {
 	let user, password;
 	try {
 		// Fetch username & password from body
-		let { user, password } = await request.json();
+		const { user: _user, password: _password } = await request.json();
+		user = _user;
+		password = _password;
 		// Verify payload is present
 		if (user === null || password === null) throw new Error();
 	} catch (e) {
@@ -38,13 +40,10 @@ export async function verifyAdmin(request) {
 	}
 
 	const admin = await userDB.get(`admin:${user}`, { type: 'json' });
-
-	if (bcrypt.compareSync(password, admin['password']))
-		return new Response(JSON.stringify({ token: createJWT(user, admin['secret']) }), {
-			status: 200, headers: adHeaders
-		}); else return new Response(JSON.stringify({ error: 'Incorrect login credentials' }), {
-		status: 401,
-		headers: adHeaders
+	if (bcrypt.compareSync(password, admin['password'])) return new Response(JSON.stringify({ token: (await createJWT(user, admin['secret'])).token }), {
+		status: 200, headers: adHeaders
+	}); else return new Response(JSON.stringify({ error: 'Incorrect login credentials' }), {
+		status: 401, headers: adHeaders
 	});
 }
 
@@ -63,8 +62,12 @@ export async function addAdmin(request) {
 	}
 
 	// Fetch username & password from body
+	let user, password;
 	try {
-		const { user, password } = await request.json();
+		// Fetch username & password from body
+		const { user: _user, password: _password } = await request.json();
+		user = _user;
+		password = _password;
 		// Verify payload is present
 		if (user === null || password === null) throw new Error();
 	} catch (e) {
@@ -77,8 +80,7 @@ export async function addAdmin(request) {
 
 	// Verify that no other admins are present
 	const allAdmins = await userDB.list({ prefix: 'admin:', type: 'json' });
-	if (allAdmins.keys.size)
-		return new Response(null, { status: 409, headers: adHeaders });
+	if (allAdmins.keys.size) return new Response(null, { status: 409, headers: adHeaders });
 
 	const { secret, token } = await createJWT(user);
 	try {
