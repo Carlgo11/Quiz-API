@@ -5,18 +5,13 @@ export const adHeaders = {
 	'Access-Control-Allow-Origin': ORIGINS,
 	'Access-Control-Allow-Methods': 'PUT,POST,OPTIONS',
 	'Access-Control-Max-Age': '7200',
-	'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+	'Access-Control-Allow-Headers': 'Authorization',
 	'Accept': 'application/json',
 	'Content-Type': 'application/json;charset=UTF-8',
 	'Cache-Control': 'private'
 };
 
 export async function verifyAdmin(request) {
-	// Verify JSON data
-	if (request.headers.get('Content-Type') !== 'application/json') return new Response(null, {
-		status: 415, headers: adHeaders
-	});
-
 	// Init user DB
 	let userDB;
 	try {
@@ -28,28 +23,33 @@ export async function verifyAdmin(request) {
 	let user, password;
 	try {
 		// Fetch username & password from body
-		const { user: _user, password: _password } = await request.json();
+		const authorization = atob(await request.headers.get('Authorization').split('Basic ')[1]).split(':');
+		const { 0: _user, 1: _password } = authorization;
 		user = _user;
 		password = _password;
 		// Verify payload is present
 		if (user === null || password === null) throw new Error();
 	} catch (e) {
-		return new Response(JSON.stringify({ error: 'Missing login credentials' }), {
+		return new Response(JSON.stringify({ error: 'Expected \'Authorization\' header with Basic Authentication credentials' }), {
 			status: 401, headers: adHeaders
 		});
 	}
 
 	const admin = await userDB.get(`admin:${user}`, { type: 'json' });
-	if (bcrypt.compareSync(password, admin['password'])) return new Response(JSON.stringify({ token: (await createJWT(user, admin['secret'])).token }), {
-		status: 200, headers: adHeaders
-	}); else return new Response(JSON.stringify({ error: 'Incorrect login credentials' }), {
-		status: 401, headers: adHeaders
-	});
+	if (bcrypt.compareSync(password, admin['password'])) {
+		return new Response(JSON.stringify({ token: (await createJWT(user, admin['secret'])).token }), {
+			status: 200, headers: adHeaders
+		});
+	} else {
+		return new Response(JSON.stringify({ error: 'Incorrect login credentials' }), {
+			status: 401, headers: adHeaders
+		});
+	}
 }
 
 export async function addAdmin(request) {
 	// Verify JSON data
-	if (request.headers.get('Content-Type') !== 'application/json') return new Response(null, {
+	if (request.headers.get('Accept') !== 'application/json') return new Response(null, {
 		status: 406, headers: adHeaders
 	});
 
@@ -65,13 +65,14 @@ export async function addAdmin(request) {
 	let user, password;
 	try {
 		// Fetch username & password from body
-		const { user: _user, password: _password } = await request.json();
+		const authorization = atob(await request.headers.get('Authorization').split('Basic ')[1]).split(':');
+		const { 0: _user, 1: _password } = authorization;
 		user = _user;
 		password = _password;
 		// Verify payload is present
 		if (user === null || password === null) throw new Error();
 	} catch (e) {
-		return new Response(JSON.stringify({ error: 'Missing login credentials' }), {
+		return new Response(JSON.stringify({ error: 'Expected \'Authorization\' header with Basic Authentication credentials' }), {
 			status: 401, headers: adHeaders
 		});
 	}
@@ -84,7 +85,6 @@ export async function addAdmin(request) {
 
 	const { secret, token } = await createJWT(user);
 	try {
-
 		userDB.put(`admin:${user}`, JSON.stringify({ secret: secret, password: pass_hash }));
 		return new Response(JSON.stringify({ token: token }), { status: 201, headers: adHeaders });
 	} catch (error) {

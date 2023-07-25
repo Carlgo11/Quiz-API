@@ -12,6 +12,7 @@
     "wrangler": "^3.0.0"
   },
   "dependencies": {
+    "@jswebfans/bcryptjs": "^2.4.4",
     "@tsndr/cloudflare-worker-jwt": "^2.2.1",
     "itty-cors": "^0.3.6"
   }
