@@ -53,7 +53,7 @@ export async function answerPost(request) {
 
 	// Verify Content-Type
 	if (request.headers.get('Content-Type') !== 'application/json')
-		return new Response(null, { status: 406, headers: { accept: 'application/json' } });
+		return new Response(null, { status: 415, headers: { accept: 'application/json' } });
 
 	// Fetch username from JWT
 	const user = await validateJWT(request, userDB);

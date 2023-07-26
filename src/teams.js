@@ -2,7 +2,7 @@ import { createJWT } from './tokens';
 
 export const tHeaders = {
 	'Access-Control-Allow-Origin': ORIGINS,
-	'Access-Control-Allow-Methods': 'HEAD,PUT,OPTIONS',
+	'Access-Control-Allow-Methods': 'PUT,OPTIONS',
 	'Access-Control-Max-Age': '7200',
 	'Access-Control-Allow-Headers': 'Accept,Content-Type',
 	'Accept': 'application/json',
@@ -14,7 +14,7 @@ export const tHeaders = {
 export async function teamsPut(request) {
 	// Verify JSON data
 	if (request.headers.get('Content-Type') !== 'application/json')
-		return new Response(null, { status: 406, headers: tHeaders });
+		return new Response(null, { status: 415, headers: tHeaders });
 
 	// Fetch username from req body
 	const { user } = await request.json();

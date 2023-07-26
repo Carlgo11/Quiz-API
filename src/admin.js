@@ -1,16 +1,16 @@
 import { createJWT } from './tokens';
-import bcrypt from '@jswebfans/bcryptjs';
+import bcrypt from 'bcryptjs';
 
 export const adHeaders = {
 	'Access-Control-Allow-Origin': ORIGINS,
 	'Access-Control-Allow-Methods': 'PUT,POST,OPTIONS',
 	'Access-Control-Max-Age': '7200',
 	'Access-Control-Allow-Headers': 'Authorization',
-	'Accept': 'application/json',
 	'Content-Type': 'application/json;charset=UTF-8',
 	'Cache-Control': 'private'
 };
 
+// POST request
 export async function verifyAdmin(request) {
 	// Init user DB
 	let userDB;
@@ -47,6 +47,7 @@ export async function verifyAdmin(request) {
 	}
 }
 
+// PUT request
 export async function addAdmin(request) {
 	// Verify JSON data
 	if (request.headers.get('Accept') !== 'application/json') return new Response(null, {
@@ -81,7 +82,7 @@ export async function addAdmin(request) {
 
 	// Verify that no other admins are present
 	const allAdmins = await userDB.list({ prefix: 'admin:', type: 'json' });
-	if (allAdmins.keys.size) return new Response(null, { status: 409, headers: adHeaders });
+	if (allAdmins.keys.length) return new Response(null, { status: 409, headers: adHeaders });
 
 	const { secret, token } = await createJWT(user);
 	try {
