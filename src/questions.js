@@ -70,9 +70,12 @@ export async function questionsPut(request) {
 		return new Response(JSON.stringify({ error: 'Database error' }), { status: 502, headers: qHeaders });
 	}
 
-	// Auth user
-	const is_admin = await verifyAdmin(request);
-	if (is_admin.status !== 200) return is_admin;
+	// Fetch username from JWT
+	const user = await validateJWT(request, userDB);
+	if (!user) return new Response(null, { status: 401, headers: qHeaders });
+	// Authenticate that user is admin
+	const admin = await userDB.get(`admin:${user}`, { type: 'json' });
+	if (!admin) return new Response(null, {status: 401, headers: qHeaders})
 
 	const body = await request.json();
 
@@ -83,7 +86,7 @@ export async function questionsPut(request) {
 		}));
 
 		// Verify that options & correct keys are included in question data
-		const included = ['options', 'correct'].every(key => body[question].includes(key));
+		const included = ['options', 'correct'].every(key => body[question].hasOwnProperty(key));
 		if (!included) return new Response(JSON.stringify({ error: 'Keys \'options\' and \'correct\' must be present' }), {
 			status: 422, headers: qHeaders
 		});
@@ -91,6 +94,7 @@ export async function questionsPut(request) {
 		// Upload question data
 		try {
 			await questionDB.put(`question:${question}`, JSON.stringify(body[question]));
+			return new Response(null, { status: 201, headers: qHeaders });
 		} catch (error) {
 			console.error(error);
 			return new Response(JSON.stringify({ error: `Error uploading question ${question}.` }), {
@@ -98,5 +102,4 @@ export async function questionsPut(request) {
 			});
 		}
 	}
-	return new Response(null, { headers: qHeaders });
 }
