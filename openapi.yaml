@@ -1,0 +1,397 @@
+openapi: 3.0.3
+info:
+  title: Quiz
+  description: Quiz API
+  version: 0.0.0
+
+servers:
+  - url: 'https://quiz.carlgo11.com/api'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+    basicAuth:
+      type: http
+      scheme: basic
+
+paths:
+
+  /questions:
+    get:
+      summary: Get all questions.
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: header
+          name: Authorization
+          description: JWT user token
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: Accept
+          required: true
+          schema:
+            type: string
+          content:
+            application/json: { }
+      responses:
+        200:
+          description: Fetched list of all questions
+          content:
+            application/json:
+              schema:
+                type: object
+                x-key-pattern: '^[0-9]+$'
+                example:
+                  "1":
+                    "options":
+                      - "A"
+                      - "B"
+                      - "C"
+                  "2":
+                    "options":
+                      - "1"
+                      - "2"
+                      - "3"
+
+        406:
+          description: "'Accept' header not set to 'application/json'"
+        502:
+          description: Unable to establish connection to database
+
+    put:
+      summary: Create a new question
+      description: Create a new question
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: header
+          name: Authorization
+          description: JWT token
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: Accept
+          required: true
+          schema:
+            type: string
+          content:
+            application/json: { }
+        - in: header
+          name: Content-Type
+          required: true
+          schema:
+            type: string
+          content:
+            application/json: { }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              x-key-pattern: '^[0-9]+$'
+              example:
+                1:
+                  options:
+                    - "A"
+                    - "B"
+                    - "C"
+                  correct:
+                    - "B"
+              additionalProperties:
+                type: object
+      responses:
+        201:
+          description: Question created
+        401:
+          description: Not authenticated as admin
+        406:
+          description: Accept not set to 'application/json'
+          headers:
+            accept:
+              schema:
+                type: string
+                default: "application/json"
+        415:
+          description: Content-Type not set to 'application/json'
+          headers:
+            accept:
+              schema:
+                type: string
+                default: "application/json"
+        422:
+          description: "Question name not numerical or not containing 'options' and 'correct'"
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+        500:
+          description: Misc internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    default: "Error uploading question {{ question }}"
+                    type: string
+        502:
+          description: Unable to establish connection to database
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    default: "Database error"
+                    type: string
+
+  /answers:
+    post:
+      summary: Upload the team's answers.
+      security:
+        - bearerAuth: [ ]
+      parameters:
+        - in: header
+          name: Authorization
+          description: JWT token
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: Content-Type
+          required: true
+          schema:
+            type: string
+          content:
+            application/json: { }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              x-key-pattern: '^[0-9]+$'
+              minLength: 1
+              additionalProperties:
+                type: string
+              example:
+                "1": "A"
+                "2": "X"
+                "3": "2"
+              description: Question number as key followed to the chosen answer
+      responses:
+        204:
+          description: Answers successfully stored
+        401:
+          description: Not authenticated
+        415:
+          description: Content-Type not set to 'application/json'
+          headers:
+            accept:
+              schema:
+                type: string
+                default: "application/json"
+        500:
+          description: Misc internal server error
+        502:
+          description: Unable to establish connection to database
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    default: "Database error"
+                    type: string
+
+  /teams:
+    put:
+      summary: Create a new team/user
+      parameters:
+        - in: header
+          name: Content-Type
+          example: "application/json"
+          required: true
+          schema:
+            type: string
+          content:
+            application/json: { }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - user
+              properties:
+                user:
+                  type: string
+      responses:
+        201:
+          description: Team successfully created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    description: "JWT token to be used for further communication"
+                    type: string
+        409:
+          description: User already exists (username taken)
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    default: "User already exists"
+                    type: string
+        415:
+          description: Content-Type not set to 'application/json'
+          headers:
+            accept:
+              schema:
+                type: string
+                default: "application/json"
+        422:
+          description: No username specified
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    default: "No user specified"
+                    type: string
+        502:
+          description: Unable to establish connection to database
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    default: "Database error"
+                    type: string
+        500:
+          description: Misc internal server error
+
+  /admin:
+    put:
+      summary: Create a new admin account
+      security:
+        - basicAuth: [ ]
+      parameters:
+        - in: header
+          name: Authorization
+          description: Basic Authentication
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: Accept
+          required: true
+          schema:
+            type: string
+          content:
+            application/json: { }
+      responses:
+        201:
+          description: Admin account created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    description: JWT admin token
+        401:
+          description: Invalid/missing authentication header
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    default: "Expected 'Authorization' header with Basic Authentication credentials"
+                    type: string
+        406:
+          description: Accept not set to 'application/json'
+          headers:
+            accept:
+              schema:
+                type: string
+                default: "application/json"
+        409:
+          description: An admin account already exists
+        502:
+          description: Unable to establish connection to database
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    default: "Database error"
+                    type: string
+        500:
+          description: Misc internal server error
+    get:
+      summary: Verify admin account credentials
+      security:
+        - basicAuth: [ ]
+      parameters:
+        - in: header
+          name: Authorization
+          description: Basic Authentication
+          required: true
+          schema:
+            type: string
+        - in: header
+          name: Accept
+          required: true
+          schema:
+            type: string
+          content:
+            application/json: { }
+      responses:
+        200:
+          description: Successful authentication
+        401:
+          description: Invalid/missing credentials
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    default: Incorrect login credentials
+                    type: string
+        406:
+          description: Accept not set to 'application/json'
+          headers:
+            accept:
+              schema:
+                type: string
+                default: "application/json"
+        502:
+          description: Unable to establish connection to database
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    default: "Database error"
+                    type: string
