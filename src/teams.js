@@ -24,7 +24,7 @@ export async function teamsPut(request) {
 	try {
 		userDB = USERS;
 	} catch (e) {
-		return new Response(null, { status: 502, headers: tHeaders });
+		return new Response(JSON.stringify({ error: 'Database error' }), { status: 502, headers: tHeaders });
 	}
 
 	// Verify USER element set

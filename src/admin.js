@@ -17,7 +17,7 @@ export async function verifyAdmin(request) {
 	try {
 		userDB = USERS;
 	} catch (e) {
-		return new Response(null, { status: 502, headers: adHeaders });
+		return new Response(JSON.stringify({ error: 'Database error' }), { status: 502, headers: adHeaders });
 	}
 
 	let user, password;
@@ -59,7 +59,7 @@ export async function addAdmin(request) {
 	try {
 		userDB = USERS;
 	} catch (e) {
-		return new Response(null, { status: 502, headers: adHeaders });
+		return new Response(JSON.stringify({ error: 'Database error' }), { status: 502, headers: adHeaders });
 	}
 
 	// Fetch username & password from body
