@@ -28,7 +28,7 @@ export async function teamsPut(request) {
 	}
 
 	// Verify USER element set
-	if (user === null) return new Response(JSON.stringify({ error: 'No user specified' }), {
+	if (user === null) return new Response(JSON.stringify({ error: 'No username specified' }), {
 		status: 422,
 		headers: tHeaders
 	});

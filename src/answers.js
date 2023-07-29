@@ -37,7 +37,7 @@ export async function answerGet(request) {
 		return new Response(JSON.stringify({ error: 'Database error' }), { status: 502, headers: qHeaders });
 	}
 	const user = await validateJWT(request, userDB);
-	if (!user) return new Response(null, { status: 401 });
+	if (!user) return new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), { status: 401 });
 	return new Response(JSON.stringify(getUserAnswers(user, userDB)), { headers: aHeaders });
 }
 
@@ -57,7 +57,7 @@ export async function answerPost(request) {
 
 	// Fetch username from JWT
 	const user = await validateJWT(request, userDB);
-	if (!user) return new Response(null, { status: 401, headers: aHeaders });
+	if (!user) return new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), { status: 401, headers: aHeaders });
 
 	// Fetch answers from req body
 	const { answers } = await request.json();

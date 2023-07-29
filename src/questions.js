@@ -44,7 +44,7 @@ export async function questionsGet(request) {
 
 	// Fetch username from JWT
 	const user = await validateJWT(request, userDB);
-	if (!user) return new Response(null, { status: 401, headers: qHeaders });
+	if (!user) return new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), { status: 401, headers: qHeaders });
 
 	return new Response(JSON.stringify(await getAvailableQuestions(questionDB)), { headers: qHeaders });
 }
@@ -72,10 +72,10 @@ export async function questionsPut(request) {
 
 	// Fetch username from JWT
 	const user = await validateJWT(request, userDB);
-	if (!user) return new Response(null, { status: 401, headers: qHeaders });
+	if (!user) return new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), { status: 401, headers: qHeaders });
 	// Authenticate that user is admin
 	const admin = await userDB.get(`admin:${user}`, { type: 'json' });
-	if (!admin) return new Response(null, {status: 401, headers: qHeaders})
+	if (!admin) return new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), {status: 401, headers: qHeaders})
 
 	const body = await request.json();
 

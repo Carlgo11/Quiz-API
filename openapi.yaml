@@ -12,9 +12,79 @@ components:
     bearerAuth:
       type: http
       scheme: bearer
+      bearerFormat: JWT
     basicAuth:
       type: http
       scheme: basic
+  parameters:
+    bearerAuth:
+      in: header
+      name: Authorization
+      description: JWT token
+      required: true
+      schema:
+        type: string
+    basicAuth:
+      in: header
+      name: Authorization
+      description: Basic Authentication
+      required: true
+      schema:
+        type: string
+    acceptJSON:
+      in: header
+      name: Accept
+      required: true
+      schema:
+        type: string
+      content:
+        application/json: { }
+    contentJSON:
+      in: header
+      name: Content-Type
+      required: true
+      schema:
+        type: string
+      content:
+        application/json: { }
+
+  responses:
+    Unauthorized:
+      description: "Missing or invalid credentials"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                default: "Incorrect or missing login credentials"
+                type: string
+    Accept:
+      description: "Accept not set to 'application/json'"
+      headers:
+        accept:
+          schema:
+            type: string
+            default: "application/json"
+    Content-Type:
+      description: "Content-Type not set to 'application/json'"
+      headers:
+        accept:
+          schema:
+            type: string
+            default: "application/json"
+    DB-Error:
+      description: "Unable to establish connection to database"
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                default: "Database error"
+                type: string
+    Misc:
+      description: Misc internal server error
 
 paths:
 
@@ -24,19 +94,8 @@ paths:
       security:
         - bearerAuth: [ ]
       parameters:
-        - in: header
-          name: Authorization
-          description: JWT user token
-          required: true
-          schema:
-            type: string
-        - in: header
-          name: Accept
-          required: true
-          schema:
-            type: string
-          content:
-            application/json: { }
+        - $ref: '#/components/parameters/bearerAuth'
+        - $ref: '#/components/parameters/acceptJSON'
       responses:
         200:
           description: Fetched list of all questions
@@ -56,38 +115,21 @@ paths:
                       - "1"
                       - "2"
                       - "3"
-
+        401:
+          $ref: '#/components/responses/Unauthorized'
         406:
-          description: "'Accept' header not set to 'application/json'"
+          $ref: '#/components/responses/Accept'
         502:
-          description: Unable to establish connection to database
+          $ref: '#/components/responses/DB-Error'
 
     put:
       summary: Create a new question
-      description: Create a new question
       security:
         - bearerAuth: [ ]
       parameters:
-        - in: header
-          name: Authorization
-          description: JWT token
-          required: true
-          schema:
-            type: string
-        - in: header
-          name: Accept
-          required: true
-          schema:
-            type: string
-          content:
-            application/json: { }
-        - in: header
-          name: Content-Type
-          required: true
-          schema:
-            type: string
-          content:
-            application/json: { }
+        - $ref: '#/components/parameters/bearerAuth'
+        - $ref: '#/components/parameters/acceptJSON'
+        - $ref: '#/components/parameters/contentJSON'
       requestBody:
         required: true
         content:
@@ -109,21 +151,9 @@ paths:
         201:
           description: Question created
         401:
-          description: Not authenticated as admin
+          $ref: '#/components/responses/Unauthorized'
         406:
-          description: Accept not set to 'application/json'
-          headers:
-            accept:
-              schema:
-                type: string
-                default: "application/json"
-        415:
-          description: Content-Type not set to 'application/json'
-          headers:
-            accept:
-              schema:
-                type: string
-                default: "application/json"
+          $ref: '#/components/responses/Accept'
         422:
           description: "Question name not numerical or not containing 'options' and 'correct'"
           content:
@@ -144,15 +174,7 @@ paths:
                     default: "Error uploading question {{ question }}"
                     type: string
         502:
-          description: Unable to establish connection to database
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    default: "Database error"
-                    type: string
+          $ref: '#/components/responses/DB-Error'
 
   /answers:
     post:
@@ -160,19 +182,8 @@ paths:
       security:
         - bearerAuth: [ ]
       parameters:
-        - in: header
-          name: Authorization
-          description: JWT token
-          required: true
-          schema:
-            type: string
-        - in: header
-          name: Content-Type
-          required: true
-          schema:
-            type: string
-          content:
-            application/json: { }
+        - $ref: '#/components/parameters/bearerAuth'
+        - $ref: '#/components/parameters/contentJSON'
       requestBody:
         required: true
         content:
@@ -192,39 +203,19 @@ paths:
         204:
           description: Answers successfully stored
         401:
-          description: Not authenticated
+          $ref: '#/components/responses/Unauthorized'
         415:
-          description: Content-Type not set to 'application/json'
-          headers:
-            accept:
-              schema:
-                type: string
-                default: "application/json"
+          $ref: '#/components/responses/Content-Type'
         500:
-          description: Misc internal server error
+          $ref: '#/components/responses/Misc'
         502:
-          description: Unable to establish connection to database
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    default: "Database error"
-                    type: string
+          $ref: '#/components/responses/DB-Error'
 
   /teams:
     put:
       summary: Create a new team/user
       parameters:
-        - in: header
-          name: Content-Type
-          example: "application/json"
-          required: true
-          schema:
-            type: string
-          content:
-            application/json: { }
+        - $ref: '#/components/parameters/contentJSON'
       requestBody:
         required: true
         content:
@@ -258,12 +249,7 @@ paths:
                     default: "User already exists"
                     type: string
         415:
-          description: Content-Type not set to 'application/json'
-          headers:
-            accept:
-              schema:
-                type: string
-                default: "application/json"
+          $ref: '#/components/responses/Content-Type'
         422:
           description: No username specified
           content:
@@ -272,20 +258,12 @@ paths:
                 type: object
                 properties:
                   error:
-                    default: "No user specified"
+                    default: "No username specified"
                     type: string
         502:
-          description: Unable to establish connection to database
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    default: "Database error"
-                    type: string
+          $ref: '#/components/responses/DB-Error'
         500:
-          description: Misc internal server error
+          $ref: '#/components/responses/Misc'
 
   /admin:
     put:
@@ -293,19 +271,8 @@ paths:
       security:
         - basicAuth: [ ]
       parameters:
-        - in: header
-          name: Authorization
-          description: Basic Authentication
-          required: true
-          schema:
-            type: string
-        - in: header
-          name: Accept
-          required: true
-          schema:
-            type: string
-          content:
-            application/json: { }
+        - $ref: '#/components/parameters/basicAuth'
+        - $ref: '#/components/parameters/acceptJSON'
       responses:
         201:
           description: Admin account created
@@ -317,81 +284,30 @@ paths:
                   token:
                     description: JWT admin token
         401:
-          description: Invalid/missing authentication header
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    default: "Expected 'Authorization' header with Basic Authentication credentials"
-                    type: string
+          $ref: '#/components/responses/Unauthorized'
         406:
-          description: Accept not set to 'application/json'
-          headers:
-            accept:
-              schema:
-                type: string
-                default: "application/json"
+          $ref: '#/components/responses/Accept'
         409:
           description: An admin account already exists
         502:
-          description: Unable to establish connection to database
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    default: "Database error"
-                    type: string
+          $ref: '#/components/responses/DB-Error'
         500:
-          description: Misc internal server error
+          $ref: '#/components/responses/Misc'
+
     get:
       summary: Verify admin account credentials
       security:
         - basicAuth: [ ]
       parameters:
-        - in: header
-          name: Authorization
-          description: Basic Authentication
-          required: true
-          schema:
-            type: string
-        - in: header
-          name: Accept
-          required: true
-          schema:
-            type: string
-          content:
-            application/json: { }
+        - $ref: '#/components/parameters/basicAuth'
+        - $ref: '#/components/parameters/acceptJSON'
       responses:
         200:
           description: Successful authentication
         401:
-          description: Invalid/missing credentials
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    default: Incorrect login credentials
-                    type: string
+          $ref: '#/components/responses/Unauthorized'
         406:
-          description: Accept not set to 'application/json'
-          headers:
-            accept:
-              schema:
-                type: string
-                default: "application/json"
+          $ref: '#/components/responses/Accept'
         502:
-          description: Unable to establish connection to database
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  error:
-                    default: "Database error"
-                    type: string
+          $ref: '#/components/responses/DB-Error'
+

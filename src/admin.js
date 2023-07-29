@@ -30,7 +30,7 @@ export async function verifyAdmin(request) {
 		// Verify payload is present
 		if (user === null || password === null) throw new Error();
 	} catch (e) {
-		return new Response(JSON.stringify({ error: 'Expected \'Authorization\' header with Basic Authentication credentials' }), {
+		return new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), {
 			status: 401, headers: adHeaders
 		});
 	}
@@ -41,7 +41,7 @@ export async function verifyAdmin(request) {
 			status: 200, headers: adHeaders
 		});
 	} else {
-		return new Response(JSON.stringify({ error: 'Incorrect login credentials' }), {
+		return new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), {
 			status: 401, headers: adHeaders
 		});
 	}
@@ -73,7 +73,7 @@ export async function addAdmin(request) {
 		// Verify payload is present
 		if (user === null || password === null) throw new Error();
 	} catch (e) {
-		return new Response(JSON.stringify({ error: 'Expected \'Authorization\' header with Basic Authentication credentials' }), {
+		return new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), {
 			status: 401, headers: adHeaders
 		});
 	}
