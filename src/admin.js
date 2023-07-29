@@ -9,6 +9,9 @@ export const adHeaders = {
 	'Content-Type': 'application/json;charset=UTF-8',
 	'Cache-Control': 'private'
 };
+const authHeaders = {
+	...adHeaders, ['WWW-Authenticate']: 'Basic realm="Admin Credentials Required"'
+};
 
 // POST request
 export async function verifyAdmin(request) {
@@ -31,7 +34,7 @@ export async function verifyAdmin(request) {
 		if (user === null || password === null) throw new Error();
 	} catch (e) {
 		return new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), {
-			status: 401, headers: adHeaders
+			status: 401, headers: authHeaders
 		});
 	}
 
@@ -40,11 +43,9 @@ export async function verifyAdmin(request) {
 		return new Response(JSON.stringify({ token: (await createJWT(user, admin['secret'])).token }), {
 			status: 200, headers: adHeaders
 		});
-	} else {
-		return new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), {
-			status: 401, headers: adHeaders
-		});
-	}
+	} else return new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), {
+		status: 401, headers: authHeaders
+	});
 }
 
 // PUT request
@@ -74,7 +75,7 @@ export async function addAdmin(request) {
 		if (user === null || password === null) throw new Error();
 	} catch (e) {
 		return new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), {
-			status: 401, headers: adHeaders
+			status: 401, headers: authHeaders
 		});
 	}
 

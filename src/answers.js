@@ -1,5 +1,6 @@
 import { validateJWT } from './tokens';
 import { qHeaders } from './questions';
+import { adHeaders } from './admin';
 
 export const aHeaders = {
 	'Access-Control-Allow-Origin': ORIGINS,
@@ -57,7 +58,17 @@ export async function answerPost(request) {
 
 	// Fetch username from JWT
 	const user = await validateJWT(request, userDB);
-	if (!user) return new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), { status: 401, headers: aHeaders });
+
+	if (!user) {
+		const headers = {
+			...adHeaders,
+			['WWW-Authenticate']: 'Bearer realm="Authentication Required"'
+		}
+		return new Response(JSON.stringify({ error: 'Incorrect or missing access token' }), {
+			status: 401,
+			headers: headers
+		});
+	}
 
 	// Fetch answers from req body
 	const { answers } = await request.json();

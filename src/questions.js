@@ -1,5 +1,5 @@
 import { validateJWT } from './tokens';
-import { verifyAdmin } from './admin';
+import { adHeaders, verifyAdmin } from './admin';
 
 export const qHeaders = {
 	'Access-Control-Allow-Origin': ORIGINS,
@@ -44,7 +44,14 @@ export async function questionsGet(request) {
 
 	// Fetch username from JWT
 	const user = await validateJWT(request, userDB);
-	if (!user) return new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), { status: 401, headers: qHeaders });
+	const headers = {
+		...adHeaders,
+		['WWW-Authenticate']: 'Bearer realm="Authentication Required"'
+	};
+	if (!user) return new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), {
+		status: 401,
+		headers: headers
+	});
 
 	return new Response(JSON.stringify(await getAvailableQuestions(questionDB)), { headers: qHeaders });
 }
@@ -72,10 +79,16 @@ export async function questionsPut(request) {
 
 	// Fetch username from JWT
 	const user = await validateJWT(request, userDB);
-	if (!user) return new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), { status: 401, headers: qHeaders });
+	const invalidAuth = new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), {
+		status: 401, headers: {
+			...adHeaders,
+			['WWW-Authenticate']: 'Bearer realm="Admin Credentials Required"'
+		}
+	});
+	if (!user) return invalidAuth;
 	// Authenticate that user is admin
 	const admin = await userDB.get(`admin:${user}`, { type: 'json' });
-	if (!admin) return new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), {status: 401, headers: qHeaders})
+	if (!admin) return invalidAuth;
 
 	const body = await request.json();
 
