@@ -1,4 +1,4 @@
-openapi: 3.0.3
+openapi: 3.1.0
 info:
   title: Quiz
   description: Quiz API
@@ -8,6 +8,57 @@ servers:
   - url: 'https://quiz.carlgo11.com/api'
 
 components:
+  schemas:
+    Question:
+      description: "Question object"
+      x-key-pattern: '^[0-9]+$'
+      properties:
+        options:
+          $ref: '#/components/schemas/options'
+        correct:
+          $ref: '#/components/schemas/correct'
+      example:
+        options:
+          - "A"
+          - "B"
+          - "C"
+        correct:
+          - "B"
+    options:
+      description: "Array of available answers to choose from for a question"
+      type: [array]
+      items:
+        $ref: '#/components/schemas/Answer'
+      additionalProperties:
+        type: [string]
+      example: "A"
+    correct:
+      description: "The correct answer for a question"
+      type: [string]
+      items:
+        $ref: '#/components/schemas/Answer'
+      example:
+        - "B"
+    Answer:
+      description: "Answer to a question"
+      type: [string]
+      example:
+        - "A"
+        - "B"
+        - "1"
+        - "X"
+    NonNumericalQuestion:
+      properties:
+        error:
+          example: "Question key must be numerical"
+          default: "Question key must be numerical"
+          type: [string]
+    QuestionKeysMissing:
+      properties:
+        error:
+          example: "Keys 'options' and 'correct' must be present"
+          default: "Keys 'options' and 'correct' must be present"
+          type: [string]
   securitySchemes:
     bearerAuth:
       type: http
@@ -23,14 +74,14 @@ components:
       description: JWT token
       required: true
       schema:
-        type: string
+        type: [string]
     basicAuth:
       in: header
       name: Authorization
       description: Basic Authentication
       required: true
       schema:
-        type: string
+        type: [string]
     acceptJSON:
       in: header
       name: Accept
@@ -49,7 +100,7 @@ components:
         application/json: { }
 
   responses:
-    Unauthorized:
+    UnauthorizedUser:
       description: "Missing or invalid credentials"
       content:
         application/json:
@@ -58,31 +109,49 @@ components:
             properties:
               error:
                 default: "Incorrect or missing login credentials"
-                type: string
+                type: [string]
+      headers:
+        www-authorize:
+          schema:
+            type: [string]
+            default: 'Bearer realm="Authentication Required"'
+    UnauthorizedAdmin:
+      description: "Missing or invalid credentials"
+      content:
+        application/json:
+          schema:
+            properties:
+              error:
+                default: "Incorrect or missing login credentials"
+      headers:
+        www-authorize:
+          schema:
+            type: [string]
+            default: 'Basic realm="Admin Credentials Required"'
     Accept:
       description: "Accept not set to 'application/json'"
       headers:
         accept:
           schema:
-            type: string
+            type: [string]
             default: "application/json"
     Content-Type:
       description: "Content-Type not set to 'application/json'"
       headers:
         accept:
           schema:
-            type: string
+            type: [string]
             default: "application/json"
     DB-Error:
       description: "Unable to establish connection to database"
       content:
         application/json:
           schema:
-            type: object
+            type: [object]
             properties:
               error:
                 default: "Database error"
-                type: string
+                type: [string]
     Misc:
       description: Misc internal server error
 
@@ -102,21 +171,21 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                x-key-pattern: '^[0-9]+$'
-                example:
-                  "1":
-                    "options":
-                      - "A"
-                      - "B"
-                      - "C"
-                  "2":
-                    "options":
-                      - "1"
-                      - "2"
-                      - "3"
+                patternProperties:
+                '^[0-9]+$':
+                  example:
+                    "1":
+                      "options":
+                        - "A"
+                        - "B"
+                        - "C"
+                    "2":
+                      "options":
+                        - "1"
+                        - "2"
+                        - "3"
         401:
-          $ref: '#/components/responses/Unauthorized'
+          $ref: '#/components/responses/UnauthorizedUser'
         406:
           $ref: '#/components/responses/Accept'
         502:
@@ -135,23 +204,15 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              x-key-pattern: '^[0-9]+$'
-              example:
-                1:
-                  options:
-                    - "A"
-                    - "B"
-                    - "C"
-                  correct:
-                    - "B"
-              additionalProperties:
-                type: object
+              patternProperties:
+                '^[0-9]+$':
+                  $ref: '#/components/schemas/Question'
+
       responses:
         201:
           description: Question created
         401:
-          $ref: '#/components/responses/Unauthorized'
+          $ref: '#/components/responses/UnauthorizedAdmin'
         406:
           $ref: '#/components/responses/Accept'
         422:
@@ -159,20 +220,20 @@ paths:
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  error:
-                    type: string
+                oneOf:
+                  - $ref: '#/components/schemas/NonNumericalQuestion'
+                  - $ref: '#/components/schemas/QuestionKeysMissing'
         500:
           description: Misc internal server error
           content:
             application/json:
               schema:
-                type: object
+                type: [object]
                 properties:
                   error:
                     default: "Error uploading question {{ question }}"
-                    type: string
+                    example: "Error uploading question 2"
+                    type: [string]
         502:
           $ref: '#/components/responses/DB-Error'
 
@@ -189,11 +250,11 @@ paths:
         content:
           application/json:
             schema:
-              type: object
+              type: [object]
               x-key-pattern: '^[0-9]+$'
               minLength: 1
               additionalProperties:
-                type: string
+                type: [string]
               example:
                 "1": "A"
                 "2": "X"
@@ -203,7 +264,7 @@ paths:
         204:
           description: Answers successfully stored
         401:
-          $ref: '#/components/responses/Unauthorized'
+          $ref: '#/components/responses/UnauthorizedUser'
         415:
           $ref: '#/components/responses/Content-Type'
         500:
@@ -221,33 +282,33 @@ paths:
         content:
           application/json:
             schema:
-              type: object
+              type: [object]
               required:
                 - user
               properties:
                 user:
-                  type: string
+                  type: [string]
       responses:
         201:
           description: Team successfully created
           content:
             application/json:
               schema:
-                type: object
+                type: [object]
                 properties:
                   token:
                     description: "JWT token to be used for further communication"
-                    type: string
+                    type: [string]
         409:
           description: User already exists (username taken)
           content:
             application/json:
               schema:
-                type: object
+                type: [object]
                 properties:
                   error:
                     default: "User already exists"
-                    type: string
+                    type: [string]
         415:
           $ref: '#/components/responses/Content-Type'
         422:
@@ -255,11 +316,11 @@ paths:
           content:
             application/json:
               schema:
-                type: object
+                type: [object]
                 properties:
                   error:
                     default: "No username specified"
-                    type: string
+                    type: [string]
         502:
           $ref: '#/components/responses/DB-Error'
         500:
@@ -279,12 +340,11 @@ paths:
           content:
             application/json:
               schema:
-                type: object
                 properties:
                   token:
                     description: JWT admin token
         401:
-          $ref: '#/components/responses/Unauthorized'
+          $ref: '#/components/responses/UnauthorizedAdmin'
         406:
           $ref: '#/components/responses/Accept'
         409:
@@ -305,7 +365,7 @@ paths:
         200:
           description: Successful authentication
         401:
-          $ref: '#/components/responses/Unauthorized'
+          $ref: '#/components/responses/UnauthorizedAdmin'
         406:
           $ref: '#/components/responses/Accept'
         502:
