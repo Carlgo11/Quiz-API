@@ -26,22 +26,22 @@ components:
           - "B"
     options:
       description: "Array of available answers to choose from for a question"
-      type: [array]
+      type: array
       items:
         $ref: '#/components/schemas/Answer'
       additionalProperties:
-        type: [string]
+        type: string
       example: "A"
     correct:
       description: "The correct answer for a question"
-      type: [string]
+      type: string
       items:
         $ref: '#/components/schemas/Answer'
       example:
         - "B"
     Answer:
       description: "Answer to a question"
-      type: [string]
+      type: string
       example:
         - "A"
         - "B"
@@ -52,13 +52,13 @@ components:
         error:
           example: "Question key must be numerical"
           default: "Question key must be numerical"
-          type: [string]
+          type: string
     QuestionKeysMissing:
       properties:
         error:
           example: "Keys 'options' and 'correct' must be present"
           default: "Keys 'options' and 'correct' must be present"
-          type: [string]
+          type: string
   securitySchemes:
     bearerAuth:
       type: http
@@ -74,14 +74,14 @@ components:
       description: JWT token
       required: true
       schema:
-        type: [string]
+        type: string
     basicAuth:
       in: header
       name: Authorization
       description: Basic Authentication
       required: true
       schema:
-        type: [string]
+        type: string
     acceptJSON:
       in: header
       name: Accept
@@ -109,11 +109,11 @@ components:
             properties:
               error:
                 default: "Incorrect or missing login credentials"
-                type: [string]
+                type: string
       headers:
         www-authorize:
           schema:
-            type: [string]
+            type: string
             default: 'Bearer realm="Authentication Required"'
     UnauthorizedAdmin:
       description: "Missing or invalid credentials"
@@ -126,32 +126,32 @@ components:
       headers:
         www-authorize:
           schema:
-            type: [string]
+            type: string
             default: 'Basic realm="Admin Credentials Required"'
     Accept:
       description: "Accept not set to 'application/json'"
       headers:
         accept:
           schema:
-            type: [string]
+            type: string
             default: "application/json"
     Content-Type:
       description: "Content-Type not set to 'application/json'"
       headers:
         accept:
           schema:
-            type: [string]
+            type: string
             default: "application/json"
     DB-Error:
       description: "Unable to establish connection to database"
       content:
         application/json:
           schema:
-            type: [object]
+            type: object
             properties:
               error:
                 default: "Database error"
-                type: [string]
+                type: string
     Misc:
       description: Misc internal server error
 
@@ -170,20 +170,20 @@ paths:
           description: Fetched list of all questions
           content:
             application/json:
+              example:
+                "1":
+                  "options":
+                    - "A"
+                    - "B"
+                    - "C"
+                "2":
+                  "options":
+                    - "1"
+                    - "2"
+                    - "3"
               schema:
                 patternProperties:
                 '^[0-9]+$':
-                  example:
-                    "1":
-                      "options":
-                        - "A"
-                        - "B"
-                        - "C"
-                    "2":
-                      "options":
-                        - "1"
-                        - "2"
-                        - "3"
         401:
           $ref: '#/components/responses/UnauthorizedUser'
         406:
@@ -203,6 +203,13 @@ paths:
         required: true
         content:
           application/json:
+            example:
+              "1":
+                "options":
+                  - "A"
+                  - "B"
+                  - "C"
+                "correct": "B"
             schema:
               patternProperties:
                 '^[0-9]+$':
@@ -228,12 +235,12 @@ paths:
           content:
             application/json:
               schema:
-                type: [object]
+                type: object
                 properties:
                   error:
                     default: "Error uploading question {{ question }}"
                     example: "Error uploading question 2"
-                    type: [string]
+                    type: string
         502:
           $ref: '#/components/responses/DB-Error'
 
@@ -250,11 +257,11 @@ paths:
         content:
           application/json:
             schema:
-              type: [object]
+              type: object
               x-key-pattern: '^[0-9]+$'
               minLength: 1
               additionalProperties:
-                type: [string]
+                type: string
               example:
                 "1": "A"
                 "2": "X"
@@ -282,33 +289,33 @@ paths:
         content:
           application/json:
             schema:
-              type: [object]
+              type: object
               required:
                 - user
               properties:
                 user:
-                  type: [string]
+                  type: string
       responses:
         201:
           description: Team successfully created
           content:
             application/json:
               schema:
-                type: [object]
+                type: object
                 properties:
                   token:
                     description: "JWT token to be used for further communication"
-                    type: [string]
+                    type: string
         409:
           description: User already exists (username taken)
           content:
             application/json:
               schema:
-                type: [object]
+                type: object
                 properties:
                   error:
                     default: "User already exists"
-                    type: [string]
+                    type: string
         415:
           $ref: '#/components/responses/Content-Type'
         422:
@@ -316,11 +323,11 @@ paths:
           content:
             application/json:
               schema:
-                type: [object]
+                type: object
                 properties:
                   error:
                     default: "No username specified"
-                    type: [string]
+                    type: string
         502:
           $ref: '#/components/responses/DB-Error'
         500:
