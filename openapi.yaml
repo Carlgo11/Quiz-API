@@ -260,6 +260,17 @@ paths:
           description: Successfully deleted question
         401:
           $ref: '#/components/responses/UnauthorizedAdmin'
+        404:
+          description: Question not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Question ${question} not found"
+                    example: "Question 2 not found"
         500:
           description: Misc internal server error
           content:

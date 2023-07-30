@@ -155,6 +155,8 @@ export async function questionDel(request) {
 	if (!admin) return invalidAuth;
 
 	try {
+		if(await questionDB.get(`question:${question}`) === null)
+			return new Response(JSON.stringify({error: `Question ${question} not found`}), {status: 404, headers: dHeaders})
 		await questionDB.delete(`question:${question}`);
 		return new Response(null, { status: 204, headers: dHeaders });
 	} catch (e) {
