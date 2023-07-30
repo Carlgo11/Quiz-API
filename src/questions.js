@@ -87,16 +87,18 @@ export async function questionsPut(request) {
 
 	// Fetch username from JWT
 	const user = await validateJWT(request, userDB);
-	const invalidAuth = new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), {
+	if (!user) return new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), {
 		status: 401, headers: {
 			...adHeaders,
 			['WWW-Authenticate']: 'Bearer realm="Admin Credentials Required"'
 		}
 	});
-	if (!user) return invalidAuth;
 	// Authenticate that user is admin
 	const admin = await userDB.get(`admin:${user}`, { type: 'json' });
-	if (!admin) return invalidAuth;
+	if (!admin) return new Response(JSON.stringify({ error: 'Admin privileges required' }), {
+		status: 403,
+		headers: dHeaders
+	});
 
 	const body = await request.json();
 
@@ -143,24 +145,32 @@ export async function questionDel(request) {
 	}
 	// Fetch username from JWT
 	const user = await validateJWT(request, userDB);
-	const invalidAuth = new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), {
+	if (!user) return new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), {
 		status: 401, headers: {
 			...dHeaders,
 			['WWW-Authenticate']: 'Bearer realm="Admin Credentials Required"'
 		}
 	});
-	if (!user) return invalidAuth;
 	// Authenticate that user is admin
 	const admin = await userDB.get(`admin:${user}`, { type: 'json' });
-	if (!admin) return invalidAuth;
+	if (!admin) return new Response(JSON.stringify({ error: 'Admin privileges required' }), {
+		status: 403,
+		headers: dHeaders
+	});
 
 	try {
-		if(await questionDB.get(`question:${question}`) === null)
-			return new Response(JSON.stringify({error: `Question ${question} not found`}), {status: 404, headers: dHeaders})
+		if (await questionDB.get(`question:${question}`) === null)
+			return new Response(JSON.stringify({ error: `Question ${question} not found` }), {
+				status: 404,
+				headers: dHeaders
+			});
 		await questionDB.delete(`question:${question}`);
 		return new Response(null, { status: 204, headers: dHeaders });
 	} catch (e) {
 		console.error(e);
-		return new Response(JSON.stringify({error: `Error deleting question ${question}`}), { status: 500, headers: dHeaders });
+		return new Response(JSON.stringify({ error: `Error deleting question ${question}` }), {
+			status: 500,
+			headers: dHeaders
+		});
 	}
 }

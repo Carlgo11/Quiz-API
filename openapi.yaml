@@ -220,6 +220,17 @@ paths:
           description: Question created
         401:
           $ref: '#/components/responses/UnauthorizedAdmin'
+        403:
+          description: User lacks required privileges
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Admin privileges required"
+                    example: "Admin privileges required"
         406:
           $ref: '#/components/responses/Accept'
         422:
@@ -260,6 +271,17 @@ paths:
           description: Successfully deleted question
         401:
           $ref: '#/components/responses/UnauthorizedAdmin'
+        403:
+          description: User lacks required privileges
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Admin privileges required"
+                    example: "Admin privileges required"
         404:
           description: Question not found
           content:
