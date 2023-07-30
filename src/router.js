@@ -1,6 +1,6 @@
 import { Router } from 'itty-router';
 import { aHeaders, answerGet, answerPost } from './answers';
-import { qHeaders, questionsGet, questionsPut } from './questions';
+import { dHeaders, qHeaders, questionDel, questionsGet, questionsPut } from './questions';
 import { teamsPut, tHeaders } from './teams';
 import { addAdmin, adHeaders, verifyAdmin } from './admin';
 
@@ -15,7 +15,9 @@ router.all('/api/answers', () => new Response(null, { status: 405, headers: aHea
 // Questions
 router.get('/api/questions', async (request) => await questionsGet(request));
 router.put('/api/questions', async (request) => await questionsPut(request));
+router.delete('/api/questions/:question', async (request) => await questionDel(request));
 router.options('/api/questions', () => new Response(null, { status: 204, headers: qHeaders }));
+router.options('/api/questions/*', () => new Response(null, { status: 204, headers: dHeaders }));
 router.all('/api/questions', () => new Response(null, { status: 405, headers: qHeaders }));
 
 // Teams
@@ -24,10 +26,10 @@ router.options('/api/teams', () => new Response(null, { status: 204, headers: tH
 router.all('/api/teams', () => new Response(null, { status: 405, headers: tHeaders }));
 
 // Admin
-router.put('/api/admin', async (request) => await addAdmin(request))
-router.post('/api/admin', async (request) => await verifyAdmin(request))
-router.options('/api/admin', () => new Response(null, {status: 204, headers: adHeaders}))
-router.options('/api/admin', () => new Response(null, {status: 405, headers: adHeaders}))
+router.put('/api/admin', async (request) => await addAdmin(request));
+router.post('/api/admin', async (request) => await verifyAdmin(request));
+router.options('/api/admin', () => new Response(null, { status: 204, headers: adHeaders }));
+router.options('/api/admin', () => new Response(null, { status: 405, headers: adHeaders }));
 
 // 404 for everything else
 router.all('*', () => new Response('Not Found.', { status: 404 }));

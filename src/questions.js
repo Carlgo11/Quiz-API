@@ -3,10 +3,18 @@ import { adHeaders, verifyAdmin } from './admin';
 
 export const qHeaders = {
 	'Access-Control-Allow-Origin': ORIGINS,
-	'Access-Control-Allow-Methods': 'GET,PUT,OPTIONS',
+	'Access-Control-Allow-Methods': 'GET,PUT,OPTIONS,DELETE',
 	'Access-Control-Max-Age': '7200',
 	'Access-Control-Allow-Headers': 'Accept,Content-Type,Authorization',
 	'Accept': 'application/json',
+	'Content-Type': 'application/json;charset=UTF-8',
+	'Cache-Control': 'private'
+};
+export const dHeaders = {
+	'Access-Control-Allow-Origin': ORIGINS,
+	'Access-Control-Allow-Methods': 'DELETE,OPTIONS',
+	'Access-Control-Max-Age': '7200',
+	'Access-Control-Allow-Headers': 'Authorization',
 	'Content-Type': 'application/json;charset=UTF-8',
 	'Cache-Control': 'private'
 };
@@ -114,5 +122,43 @@ export async function questionsPut(request) {
 				status: 500, headers: qHeaders
 			});
 		}
+	}
+}
+
+export async function questionDel(request) {
+	const question = request.params.question;
+	if (!question) return new Response(JSON.stringify({ error: 'No Question key set' }), {
+		status: 400,
+		headers: dHeaders
+	});
+
+// Init question and user DB
+	let questionDB;
+	let userDB;
+	try {
+		questionDB = QUESTIONS;
+		userDB = USERS;
+	} catch (e) {
+		return new Response(JSON.stringify({ error: 'Database error' }), { status: 502, headers: dHeaders });
+	}
+	// Fetch username from JWT
+	const user = await validateJWT(request, userDB);
+	const invalidAuth = new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), {
+		status: 401, headers: {
+			...dHeaders,
+			['WWW-Authenticate']: 'Bearer realm="Admin Credentials Required"'
+		}
+	});
+	if (!user) return invalidAuth;
+	// Authenticate that user is admin
+	const admin = await userDB.get(`admin:${user}`, { type: 'json' });
+	if (!admin) return invalidAuth;
+
+	try {
+		await questionDB.delete(`question:${question}`);
+		return new Response(null, { status: 204, headers: dHeaders });
+	} catch (e) {
+		console.error(e);
+		return new Response(JSON.stringify({error: `Error deleting question ${question}`}), { status: 500, headers: dHeaders });
 	}
 }

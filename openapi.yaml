@@ -157,7 +157,7 @@ components:
 
 paths:
 
-  /questions:
+  /questions/:
     get:
       summary: Get all questions.
       security:
@@ -241,6 +241,36 @@ paths:
                     default: "Error uploading question {{ question }}"
                     example: "Error uploading question 2"
                     type: string
+        502:
+          $ref: '#/components/responses/DB-Error'
+  /questions/{question}:
+    delete:
+      summary: Delete a question
+      parameters:
+        - in: path
+          name: question
+          required: true
+          schema:
+            type: integer
+            minimum: 1
+          description: The question key to delete
+        - $ref: '#/components/parameters/bearerAuth'
+      responses:
+        204:
+          description: Successfully deleted question
+        401:
+          $ref: '#/components/responses/UnauthorizedAdmin'
+        500:
+          description: Misc internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    default: "Error deleting question {question}"
+                    example: "Error deleting question 2"
         502:
           $ref: '#/components/responses/DB-Error'
 
