@@ -257,6 +257,8 @@ paths:
   /questions/{question}:
     delete:
       summary: Delete a question
+      security:
+        - bearerAuth: [ ]
       parameters:
         - in: path
           name: question
