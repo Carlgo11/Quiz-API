@@ -1,6 +1,5 @@
 import { createJWT, validateJWT } from './tokens';
 import { validateAccept } from './router';
-import { qHeaders } from './questions';
 
 export const tHeaders = {
 	'Access-Control-Allow-Origin': ORIGINS,
@@ -12,31 +11,31 @@ export const tHeaders = {
 	'Cache-Control': 'private'
 };
 
+// Compare a user's answers with the correct answers for a question
 async function compareAnswers(user, questions) {
-	const answers = (await USERS.get(user, { type: 'json' })).answers;
-	let result = {};
+	const { answers } = await USERS.get(user, { type: 'json' });
 	let tally = 0;
-	for (const [i, question] of Object.entries(questions)) {
+
+	const result = Object.keys(questions).reduce((ans, i) => {
 		const name = i.replace('question:', '');
-		const correct = JSON.parse(question).correct;
-		let answer = {};
-		answer = {
-			answer: answers[name],
-			correct: answers[name] === correct
-		};
-		if (answers[name] === correct) tally++;
-		result[name] = answer;
-	}
-	result = { ...result, total: `${tally}/${Object.entries(questions).length}` };
-	console.log(result)
+		const correct = JSON.parse(questions[i]).correct;
+		const isCorrect = answers[name] === correct;
+
+		ans[name] = { answer: answers[name], correct: isCorrect };
+		tally += isCorrect ? 1 : 0;
+
+		return ans;
+	}, {});
+
+	result.total = `${tally}/${Object.keys(questions).length}`;
 	return result;
 }
 
+// GET request
 export async function teamsGet(request) {
 	// Verify expected res Content-Type eql JSON
-	if (validateAccept(request.headers.get('Accept'))) return new Response(null, {
-		status: 406, headers: qHeaders
-	});
+	if (validateAccept(request.headers.get('Accept')))
+		return new Response(null, { status: 406, headers: tHeaders });
 
 	// Init question and user DB
 	let questionDB;
@@ -45,41 +44,34 @@ export async function teamsGet(request) {
 		questionDB = QUESTIONS;
 		userDB = USERS;
 	} catch (e) {
-		return new Response(JSON.stringify({ error: 'Database error' }), { status: 502, headers: qHeaders });
+		return new Response(JSON.stringify({ error: 'Database error' }), { status: 502, headers: tHeaders });
 	}
+
 	// Fetch username from JWT
 	const requestee = await validateJWT(request, userDB);
 	if (!requestee) return new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), {
 		status: 401, headers: {
-			...adHeaders,
-			['WWW-Authenticate']: 'Bearer realm="Admin Credentials Required"'
+			...tHeaders, ['WWW-Authenticate']: 'Bearer realm="Admin Credentials Required"'
 		}
 	});
-	// Authenticate that user is admin
-	const admin = await userDB.get(`admin:${requestee}`, { type: 'json' });
-	if (!admin) return new Response(JSON.stringify({ error: 'Admin privileges required' }), {
-		status: 403,
-		headers: dHeaders
-	});
-	const users = await userDB.list({ prefix: 'user:' }, { type: 'json' });
-	const question_keys = await questionDB.list({ prefix: 'question:' }, { type: 'json' });
-	let teams = {};
-	let questions = {};
-	for (const { name: question } of question_keys.keys) {
-		questions[question] = await questionDB.get(question);
-	}
-	for (const { name: user } of users.keys) {
-		const username = user.replace('user:', '');
-		teams[username] = await compareAnswers(user, questions);
-	}
+
+	// Authenticate that user has admin rights
+	if (!(await userDB.get(`admin:${requestee}`, { type: 'json' })))
+		return new Response(JSON.stringify({ error: 'Admin privileges required' }), { status: 403, headers: tHeaders });
+
+	// Fetch list of users and questions
+	const questions = Object.fromEntries(await Promise.all((await questionDB.list({ prefix: 'question:' }, { type: 'json' })).keys.map(async ({ name }) => [name, await questionDB.get(name)])));
+	const teams = Object.fromEntries(await Promise.all((await userDB.list({ prefix: 'user:' }, { type: 'json' })).keys.map(async ({ name }) => [name.replace('user:', ''), await compareAnswers(name, questions)])));
+
 	return new Response(JSON.stringify(teams), { status: 200, headers: tHeaders });
 }
 
 // PUT request
 export async function teamsPut(request) {
 	// Verify JSON data
-	if (request.headers.get('Content-Type') !== 'application/json')
-		return new Response(null, { status: 415, headers: tHeaders });
+	if (request.headers.get('Content-Type') !== 'application/json') return new Response(null, {
+		status: 415, headers: tHeaders
+	});
 
 	// Fetch username from req body
 	const { user } = await request.json();
@@ -94,8 +86,7 @@ export async function teamsPut(request) {
 
 	// Verify USER element set
 	if (user === null) return new Response(JSON.stringify({ error: 'No username specified' }), {
-		status: 422,
-		headers: tHeaders
+		status: 422, headers: tHeaders
 	});
 
 	// Verify username isn't taken
