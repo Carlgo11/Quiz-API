@@ -1,5 +1,6 @@
 import { createJWT } from './tokens';
 import bcrypt from 'bcryptjs';
+import { validateAccept } from './router';
 
 export const adHeaders = {
 	'Access-Control-Allow-Origin': ORIGINS,
@@ -51,7 +52,7 @@ export async function verifyAdmin(request) {
 // PUT request
 export async function addAdmin(request) {
 	// Verify JSON data
-	if (request.headers.get('Accept') !== 'application/json') return new Response(null, {
+	if (validateAccept(request.headers.get('Accept'))) return new Response(null, {
 		status: 406, headers: adHeaders
 	});
 

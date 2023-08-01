@@ -1,6 +1,5 @@
 import { validateJWT } from './tokens';
 import { qHeaders } from './questions';
-import { adHeaders } from './admin';
 
 export const aHeaders = {
 	'Access-Control-Allow-Origin': ORIGINS,
@@ -38,7 +37,10 @@ export async function answerGet(request) {
 		return new Response(JSON.stringify({ error: 'Database error' }), { status: 502, headers: qHeaders });
 	}
 	const user = await validateJWT(request, userDB);
-	if (!user) return new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), { status: 401 });
+	if (!user) return new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), {
+		status: 401,
+		headers: { ...aHeaders, ['WWW-Authenticate']: 'Bearer realm="Admin Credentials Required"' }
+	});
 	return new Response(JSON.stringify(getUserAnswers(user, userDB)), { headers: aHeaders });
 }
 
@@ -63,7 +65,7 @@ export async function answerPost(request) {
 		const headers = {
 			...adHeaders,
 			['WWW-Authenticate']: 'Bearer realm="Authentication Required"'
-		}
+		};
 		return new Response(JSON.stringify({ error: 'Incorrect or missing access token' }), {
 			status: 401,
 			headers: headers
@@ -74,7 +76,7 @@ export async function answerPost(request) {
 	const { answers } = await request.json();
 	if (!answers) return new Response(JSON.stringify({ error: 'Payload Missing' }), {
 		status: 422,
-		headers: { 'content-type': 'application/json' }
+		headers: aHeaders
 	});
 
 	// Store answers in DB

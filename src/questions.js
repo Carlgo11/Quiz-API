@@ -1,5 +1,6 @@
 import { validateJWT } from './tokens';
 import { adHeaders, verifyAdmin } from './admin';
+import { validateAccept } from './router';
 
 export const qHeaders = {
 	'Access-Control-Allow-Origin': ORIGINS,
@@ -36,7 +37,7 @@ async function getAvailableQuestions(questionDB) {
 // GET request
 export async function questionsGet(request) {
 	// Verify expected res Content-Type eql JSON
-	if (request.headers.get('Accept') !== 'application/json') return new Response(null, {
+	if (validateAccept(request.headers.get('Accept'))) return new Response(null, {
 		status: 406, headers: qHeaders
 	});
 
@@ -53,7 +54,7 @@ export async function questionsGet(request) {
 	// Fetch username from JWT
 	const user = await validateJWT(request, userDB);
 	const headers = {
-		...adHeaders,
+		...qHeaders,
 		['WWW-Authenticate']: 'Bearer realm="Authentication Required"'
 	};
 	if (!user) return new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), {
@@ -70,8 +71,7 @@ export async function questionsPut(request) {
 	if (request.headers.get('Content-Type') !== 'application/json') return new Response(null, {
 		status: 415, headers: qHeaders
 	});
-
-	if (request.headers.get('Accept') !== 'application/json') return new Response(null, {
+	if (validateAccept(request.headers.get('Accept'))) return new Response(null, {
 		status: 406, headers: qHeaders
 	});
 	// Init question and user DB

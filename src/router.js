@@ -1,7 +1,7 @@
 import { Router } from 'itty-router';
 import { aHeaders, answerGet, answerPost } from './answers';
 import { dHeaders, qHeaders, questionDel, questionsGet, questionsPut } from './questions';
-import { teamsPut, tHeaders } from './teams';
+import { teamsGet, teamsPut, tHeaders } from './teams';
 import { addAdmin, adHeaders, verifyAdmin } from './admin';
 
 const router = Router();
@@ -21,6 +21,7 @@ router.options('/api/questions/*', () => new Response(null, { status: 204, heade
 router.all('/api/questions', () => new Response(null, { status: 405, headers: qHeaders }));
 
 // Teams
+router.get('/api/teams', async (request) => await teamsGet(request));
 router.put('/api/teams', async (request) => await teamsPut(request));
 router.options('/api/teams', () => new Response(null, { status: 204, headers: tHeaders }));
 router.all('/api/teams', () => new Response(null, { status: 405, headers: tHeaders }));
@@ -35,3 +36,18 @@ router.options('/api/admin', () => new Response(null, { status: 405, headers: ad
 router.all('*', () => new Response('Not Found.', { status: 404 }));
 
 addEventListener('fetch', (event) => event.respondWith(router.handle(event.request)));
+
+// Validate that the client accepts the media type that the server expects
+export function validateAccept(request, media = 'application/json') {
+	if (!request || !request.headers)		return false;
+
+	const acceptHeader = request.headers.get('Accept');
+
+	if (!acceptHeader) return false;
+
+	// Split the Accept header into individual media types
+	const acceptedMediaTypes = acceptHeader.split(',');
+
+	// Check if 'application/json' is present in the accepted media types
+	return acceptedMediaTypes.some((mediaType) => mediaType.trim() === media);
+}
