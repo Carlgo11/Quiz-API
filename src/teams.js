@@ -63,7 +63,20 @@ export async function teamsGet(request) {
 	const questions = Object.fromEntries(await Promise.all((await questionDB.list({ prefix: 'question:' }, { type: 'json' })).keys.map(async ({ name }) => [name, await questionDB.get(name)])));
 	const teams = Object.fromEntries(await Promise.all((await userDB.list({ prefix: 'user:' }, { type: 'json' })).keys.map(async ({ name }) => [name.replace('user:', ''), await compareAnswers(name, questions)])));
 
-	return new Response(JSON.stringify(teams), { status: 200, headers: tHeaders });
+	// Convert the teams object to an array of [teamName, teamData] pairs
+	const teams_array = Object.entries(teams);
+
+	// Get Y (total questions) from the first team entry since it's the same for all teams
+	const totalQuestions = teams_array[0][1].total.split('/')[1];
+
+	// Sort the array based on the 'total' value in descending order
+	teams_array.sort(([, aData], [, bData]) => {
+		const aCorrect = aData.total.split('/')[0];
+		const bCorrect = bData.total.split('/')[0];
+		return (bCorrect / totalQuestions) - (aCorrect / totalQuestions);
+	});
+
+	return new Response(JSON.stringify(Object.fromEntries(teams_array)), { status: 200, headers: tHeaders });
 }
 
 // PUT request
