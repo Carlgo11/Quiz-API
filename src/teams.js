@@ -66,6 +66,9 @@ export async function teamsGet(request) {
 	// Convert the teams object to an array of [teamName, teamData] pairs
 	const teams_array = Object.entries(teams);
 
+	// Return empty object is no teams exist
+	if(!teams_array.length) return new Response(JSON.stringify({}), {status: 200, headers: tHeaders})
+
 	// Get Y (total questions) from the first team entry since it's the same for all teams
 	const totalQuestions = teams_array[0][1].total.split('/')[1];
 
