@@ -1,5 +1,5 @@
 import { Router } from 'itty-router';
-import { aHeaders, answerGet, answerPost } from './answers';
+import { aHeaders, answersGet, answersPost } from './answers';
 import { dHeaders, qHeaders, questionDel, questionsGet, questionsPut } from './questions';
 import { teamsGet, teamsPut, tHeaders } from './teams';
 import { addAdmin, adHeaders, verifyAdmin } from './admin';
@@ -7,8 +7,8 @@ import { addAdmin, adHeaders, verifyAdmin } from './admin';
 const router = Router();
 
 // Answers
-router.get('/api/answers', async (request) => await answerGet(request));
-router.post('/api/answers', (request) => answerPost(request));
+router.get('/api/answers', async (request) => await answersGet(request));
+router.post('/api/answers', (request) => answersPost(request));
 router.options('/api/answers', () => new Response(null, { status: 204, headers: aHeaders }));
 router.all('/api/answers', () => new Response(null, { status: 405, headers: aHeaders }));
 

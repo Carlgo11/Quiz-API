@@ -1,5 +1,5 @@
 import { validateJWT } from './tokens';
-import { qHeaders } from './questions';
+import { validateAccept } from './router';
 
 export const aHeaders = {
 	'Access-Control-Allow-Origin': ORIGINS,
@@ -18,70 +18,67 @@ async function storeUserAnswers({ user, answers }, userDB) {
 		await userDB.put(`user:${user}`, JSON.stringify(userObject));
 		return true;
 	} catch (error) {
-		console.log(error);
+		console.error(error);
+		return false;
 	}
 }
 
-function getUserAnswers(user, userDB) {
-	return userDB.get(`user:${user}`, { type: 'json' })
-		.then(userObject => userObject.answers || null);
-}
-
 // GET request
-// Get uploaded answers by the user (currently not used by UI)
-export async function answerGet(request) {
+export async function answersGet(request) {
+	// Verify expected res Content-Type eql JSON
+	if (validateAccept(request.headers.get('Accept')))
+		return new Response(null, { status: 406, headers: aHeaders });
+
 	let userDB;
 	try {
 		userDB = USERS;
 	} catch (e) {
-		return new Response(JSON.stringify({ error: 'Database error' }), { status: 502, headers: qHeaders });
+		return new Response(JSON.stringify({ error: 'Database error' }), { status: 502, headers: aHeaders });
 	}
 	const user = await validateJWT(request, userDB);
-	if (!user) return new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), {
-		status: 401,
-		headers: { ...aHeaders, ['WWW-Authenticate']: 'Bearer realm="Admin Credentials Required"' }
+	if (!user) return new Response(JSON.stringify({ error: 'Incorrect or missing access token' }), {
+		status: 401, headers: { ...aHeaders, ['WWW-Authenticate']: 'Bearer realm="Authentication Required"' }
 	});
-	return new Response(JSON.stringify(getUserAnswers(user, userDB)), { headers: aHeaders });
+	const answers = (await userDB.get(`user:${user}`, { type: 'json' })).answers;
+	return new Response(JSON.stringify(answers), { headers: aHeaders });
 }
 
 // POST request
-export async function answerPost(request) {
+export async function answersPost(request) {
 	// Init user DB
 	let userDB;
 	try {
 		userDB = USERS;
 	} catch (e) {
-		return new Response(JSON.stringify({ error: 'Database error' }), { status: 502, headers: qHeaders });
+		return new Response(JSON.stringify({ error: 'Database error' }), { status: 502, headers: aHeaders });
 	}
 
 	// Verify Content-Type
-	if (request.headers.get('Content-Type') !== 'application/json')
-		return new Response(null, { status: 415, headers: { accept: 'application/json' } });
+	if (request.headers.get('Content-Type') !== 'application/json') return new Response(null, {
+		status: 415,
+		headers: { accept: 'application/json' }
+	});
 
 	// Fetch username from JWT
 	const user = await validateJWT(request, userDB);
 
 	if (!user) {
 		const headers = {
-			...adHeaders,
-			['WWW-Authenticate']: 'Bearer realm="Authentication Required"'
+			...aHeaders, ['WWW-Authenticate']: 'Bearer realm="Authentication Required"'
 		};
 		return new Response(JSON.stringify({ error: 'Incorrect or missing access token' }), {
-			status: 401,
-			headers: headers
+			status: 401, headers: headers
 		});
 	}
 
 	// Fetch answers from req body
 	const { answers } = await request.json();
 	if (!answers) return new Response(JSON.stringify({ error: 'Payload Missing' }), {
-		status: 422,
-		headers: aHeaders
+		status: 422, headers: aHeaders
 	});
 
 	// Store answers in DB
-	if (await storeUserAnswers({ user, answers }, userDB))
-		return new Response(null, { status: 204, headers: aHeaders });
+	if (await storeUserAnswers({ user, answers }, userDB)) return new Response(null, { status: 204, headers: aHeaders });
 
 	// Catch-all 500 response
 	return new Response(null, { status: 500 });
