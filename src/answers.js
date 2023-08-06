@@ -14,12 +14,13 @@ export const aHeaders = {
 async function storeUserAnswers({ user, answers }, userDB) {
 	try {
 		let userObject = await userDB.get(`user:${user}`, { type: 'json' }) || {};
+		if (Object.entries(userObject.answers).length) return false;
 		userObject['answers'] = { ...answers };
 		await userDB.put(`user:${user}`, JSON.stringify(userObject));
 		return true;
 	} catch (error) {
 		console.error(error);
-		return false;
+		return null;
 	}
 }
 
@@ -78,8 +79,12 @@ export async function answersPost(request) {
 	});
 
 	// Store answers in DB
-	if (await storeUserAnswers({ user, answers }, userDB)) return new Response(null, { status: 204, headers: aHeaders });
+	const storeAnswers = await storeUserAnswers({ user, answers }, userDB);
+	if (storeAnswers) return new Response(null, { status: 204, headers: aHeaders });
+	else if (storeAnswers === false)
+		// Return 409 if storeUserAnswers returns false
+		return new Response(JSON.stringify({ error: 'Answers already uploaded' }), { status: 409, headers: aHeaders });
 
 	// Catch-all 500 response
-	return new Response(null, { status: 500 });
+	return new Response(null, { status: 500, headers: aHeaders });
 }
