@@ -1,7 +1,7 @@
 import { Router } from 'itty-router';
 import { aHeaders, answersGet, answersPost } from './answers';
 import { dHeaders, qHeaders, questionDel, questionsGet, questionsPut } from './questions';
-import { teamsGet, teamsPut, tHeaders } from './teams';
+import { teamsDel, teamsGet, teamsPut, tHeaders } from './teams';
 import { addAdmin, adHeaders, verifyAdmin } from './admin';
 
 const router = Router();
@@ -23,6 +23,7 @@ router.all('/api/questions', () => new Response(null, { status: 405, headers: qH
 // Teams
 router.get('/api/teams', async (request) => await teamsGet(request));
 router.put('/api/teams', async (request) => await teamsPut(request));
+router.delete('/api/teams', async (request) => await teamsDel(request));
 router.options('/api/teams', () => new Response(null, { status: 204, headers: tHeaders }));
 router.all('/api/teams', () => new Response(null, { status: 405, headers: tHeaders }));
 
