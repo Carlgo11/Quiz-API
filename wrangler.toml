@@ -2,7 +2,7 @@ name = "quiz-api"
 main = "src/router.js"
 compatibility_date = "2023-07-01"
 kv_namespaces = [
-	{ binding = "USERS", id = "ee21c09c059a42a9acebfe7125de6906", preview_id = "ee21c09c059a42a9acebfe7125de6906" },
-	{ binding = "QUESTIONS", id = "0bd7e78510cb48578be1428d9ad2069e", preview_id = "0bd7e78510cb48578be1428d9ad2069e" }
+	{ binding = "USERS", id = "4a45692c48c24818a9d5764a94589a80", preview_id = "ee21c09c059a42a9acebfe7125de6906" },
+	{ binding = "QUESTIONS", id = "43ae57d3be144e1eb575a6fe251ad464", preview_id = "ee21c09c059a42a9acebfe7125de6906" }
 ]
-vars = { ORIGINS = "{ YOUR DOMAIN }" }
+vars = { ORIGINS = "*" }
