@@ -1,5 +1,5 @@
 import { createJWT, validateJWT } from './tokens';
-import { validateAccept } from './router';
+import { validateAccept } from './global';
 
 export const tHeaders = {
 	'Access-Control-Allow-Origin': ORIGINS,

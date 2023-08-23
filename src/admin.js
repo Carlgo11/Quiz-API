@@ -1,6 +1,6 @@
 import { createJWT } from './tokens';
 import bcrypt from 'bcryptjs';
-import { validateAccept } from './router';
+import { validateAccept } from './global';
 
 export const adHeaders = {
 	'Access-Control-Allow-Origin': ORIGINS,

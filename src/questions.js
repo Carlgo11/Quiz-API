@@ -1,6 +1,6 @@
 import { validateJWT } from './tokens';
 import { adHeaders, verifyAdmin } from './admin';
-import { validateAccept } from './router';
+import { validateAccept } from './global';
 
 export const qHeaders = {
 	'Access-Control-Allow-Origin': ORIGINS,
