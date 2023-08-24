@@ -12,7 +12,7 @@ export async function validateJWT(token, userDB, expected_type = null) {
 
 	// Fetch user only from expected user type if type is set
 	const types = expected_type || ['user', 'admin'];
-	for (const type in types) {
+	for (const type of types) {
 		try {
 			const { secret } = await userDB.get(`${type}:${user}`, { type: 'json' });
 			if (await jwt.verify(token, secret))
