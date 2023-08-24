@@ -31,7 +31,7 @@ router.all('/api/teams', () => new Response(null, { status: 405, headers: tHeade
 router.post('/api/admin', async (request) => await addAdmin(request));
 router.get('/api/admin', async (request) => await verifyAdmin(request));
 router.options('/api/admin', () => new Response(null, { status: 204, headers: adHeaders }));
-router.options('/api/admin', () => new Response(null, { status: 405, headers: adHeaders }));
+router.all('/api/admin', () => new Response(null, { status: 405, headers: adHeaders }));
 
 // 404 for everything else
 router.all('*', () => new Response('Not Found.', { status: 404 }));

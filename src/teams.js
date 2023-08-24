@@ -48,7 +48,7 @@ export async function teamsGet(request) {
 	}
 
 	// Validate user access
-	if (!(await validateJWT(request, userDB, 'admin'))) return new Response(JSON.stringify({ error: 'Incorrect, missing or insufficient login credentials' }), {
+	if (!(await validateJWT(request.headers.get('Authorization').split('Bearer ')[1], userDB, 'admin'))) return new Response(JSON.stringify({ error: 'Incorrect, missing or insufficient login credentials' }), {
 		status: 401, headers: {
 			...tHeaders, ['WWW-Authenticate']: 'Bearer realm="Admin Credentials Required"'
 		}
@@ -132,7 +132,7 @@ export async function teamsDel(request) {
 	}
 
 	// Validate user access
-	if (!(await validateJWT(request, userDB, 'admin'))) return new Response(JSON.stringify({ error: 'Incorrect, missing or insufficient login credentials' }), {
+	if (!(await validateJWT(request.headers.get('Authorization').split('Bearer ')[1], userDB, 'admin'))) return new Response(JSON.stringify({ error: 'Incorrect, missing or insufficient login credentials' }), {
 		status: 401, headers: {
 			...tHeaders, ['WWW-Authenticate']: 'Bearer realm="Admin Credentials Required"'
 		}

@@ -36,7 +36,7 @@ export async function answersGet(request) {
 	} catch (e) {
 		return new Response(JSON.stringify({ error: 'Database error' }), { status: 502, headers: aHeaders });
 	}
-	const user = await validateJWT(request, userDB);
+	const user = await validateJWT(request.headers.get('Authorization').split('Bearer ')[1], userDB);
 	if (!user) return new Response(JSON.stringify({ error: 'Incorrect or missing access token' }), {
 		status: 401, headers: { ...aHeaders, ['WWW-Authenticate']: 'Bearer realm="Authentication Required"' }
 	});
@@ -61,7 +61,7 @@ export async function answersPost(request) {
 	});
 
 	// Fetch username from JWT
-	const user = await validateJWT(request, userDB);
+	const user = await validateJWT(request.headers.get('Authorization').split('Bearer ')[1], userDB);
 
 	if (!user) {
 		const headers = {
