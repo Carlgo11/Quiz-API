@@ -4,7 +4,7 @@ import { validateAccept } from './global';
 
 export const adHeaders = {
 	'Access-Control-Allow-Origin': ORIGINS,
-	'Access-Control-Allow-Methods': 'PUT,POST,OPTIONS',
+	'Access-Control-Allow-Methods': 'GET,POST,OPTIONS',
 	'Access-Control-Max-Age': '7200',
 	'Access-Control-Allow-Headers': 'Authorization',
 	'Content-Type': 'application/json;charset=UTF-8',
@@ -14,7 +14,7 @@ const authHeaders = {
 	...adHeaders, ['WWW-Authenticate']: 'Basic realm="Admin Credentials Required"'
 };
 
-// POST request
+// GET request
 export async function verifyAdmin(request) {
 	// Init user DB
 	let userDB;
@@ -41,7 +41,7 @@ export async function verifyAdmin(request) {
 
 	const admin = await userDB.get(`admin:${user}`, { type: 'json' });
 	if (bcrypt.compareSync(password, admin['password'])) {
-		return new Response(JSON.stringify({ token: (await createJWT(user, admin['secret'])).token }), {
+		return new Response(JSON.stringify({ token: (await createJWT(user, 'admin', admin['secret'])).token }), {
 			status: 200, headers: adHeaders
 		});
 	} else return new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), {
@@ -49,7 +49,7 @@ export async function verifyAdmin(request) {
 	});
 }
 
-// PUT request
+// POST request
 export async function addAdmin(request) {
 	// Verify JSON data
 	if (validateAccept(request.headers.get('Accept'))) return new Response(null, {
@@ -86,7 +86,7 @@ export async function addAdmin(request) {
 	const allAdmins = await userDB.list({ prefix: 'admin:', type: 'json' });
 	if (allAdmins.keys.length) return new Response(null, { status: 409, headers: adHeaders });
 
-	const { secret, token } = await createJWT(user);
+	const { secret, token } = await createJWT(user, 'admin');
 	try {
 		userDB.put(`admin:${user}`, JSON.stringify({ secret: secret, password: pass_hash }));
 		return new Response(JSON.stringify({ token: token }), { status: 201, headers: adHeaders });

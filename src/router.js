@@ -28,8 +28,8 @@ router.options('/api/teams', () => new Response(null, { status: 204, headers: tH
 router.all('/api/teams', () => new Response(null, { status: 405, headers: tHeaders }));
 
 // Admin
-router.put('/api/admin', async (request) => await addAdmin(request));
-router.post('/api/admin', async (request) => await verifyAdmin(request));
+router.post('/api/admin', async (request) => await addAdmin(request));
+router.get('/api/admin', async (request) => await verifyAdmin(request));
 router.options('/api/admin', () => new Response(null, { status: 204, headers: adHeaders }));
 router.options('/api/admin', () => new Response(null, { status: 405, headers: adHeaders }));
 
