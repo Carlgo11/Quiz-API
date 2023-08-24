@@ -109,7 +109,6 @@ export async function questionsPut(request) {
 		// Upload question data
 		try {
 			await questionDB.put(`question:${question}`, JSON.stringify(body[question]));
-			return new Response(null, { status: 201, headers: qHeaders });
 		} catch (error) {
 			console.error(error);
 			return new Response(JSON.stringify({ error: `Error uploading question ${question}.` }), {
@@ -117,6 +116,7 @@ export async function questionsPut(request) {
 			});
 		}
 	}
+	return new Response(null, { status: 201, headers: qHeaders });
 }
 
 export async function questionDel(request) {
