@@ -47,17 +47,12 @@ export async function teamsGet(request) {
 		return new Response(JSON.stringify({ error: 'Database error' }), { status: 502, headers: tHeaders });
 	}
 
-	// Fetch username from JWT
-	const requestee = await validateJWT(request, userDB);
-	if (!requestee) return new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), {
+	// Validate user access
+	if (!(await validateJWT(request, userDB, 'admin'))) return new Response(JSON.stringify({ error: 'Incorrect, missing or insufficient login credentials' }), {
 		status: 401, headers: {
 			...tHeaders, ['WWW-Authenticate']: 'Bearer realm="Admin Credentials Required"'
 		}
 	});
-
-	// Authenticate that user has admin rights
-	if (!(await userDB.get(`admin:${requestee}`, { type: 'json' })))
-		return new Response(JSON.stringify({ error: 'Admin privileges required' }), { status: 403, headers: tHeaders });
 
 	// Fetch list of users and questions
 	const questions = Object.fromEntries(await Promise.all((await questionDB.list({ prefix: 'question:' }, { type: 'json' })).keys.map(async ({ name }) => [name, await questionDB.get(name)])));
@@ -136,20 +131,11 @@ export async function teamsDel(request) {
 		return new Response(JSON.stringify({ error: 'Database error' }), { status: 502, headers: tHeaders });
 	}
 
-	// Fetch username from JWT
-	const requestee = await validateJWT(request, userDB);
-	if (!requestee) return new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), {
+	// Validate user access
+	if (!(await validateJWT(request, userDB, 'admin'))) return new Response(JSON.stringify({ error: 'Incorrect, missing or insufficient login credentials' }), {
 		status: 401, headers: {
-			...tHeaders,
-			['WWW-Authenticate']: 'Bearer realm="Admin Credentials Required"'
+			...tHeaders, ['WWW-Authenticate']: 'Bearer realm="Admin Credentials Required"'
 		}
-	});
-
-	// Authenticate that user is admin
-	const admin = await userDB.get(`admin:${requestee}`, { type: 'json' });
-	if (!admin) return new Response(JSON.stringify({ error: 'Admin privileges required' }), {
-		status: 403,
-		headers: tHeaders
 	});
 
 	// Fetch username from req body

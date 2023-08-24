@@ -1,6 +1,6 @@
 import { validateJWT } from './tokens';
-import { adHeaders, verifyAdmin } from './admin';
 import { validateAccept } from './global';
+import { tHeaders } from './teams';
 
 export const qHeaders = {
 	'Access-Control-Allow-Origin': ORIGINS,
@@ -85,19 +85,11 @@ export async function questionsPut(request) {
 		return new Response(JSON.stringify({ error: 'Database error' }), { status: 502, headers: qHeaders });
 	}
 
-	// Fetch username from JWT
-	const user = await validateJWT(request, userDB);
-	if (!user) return new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), {
+	// Validate user access
+	if (!(await validateJWT(request, userDB, 'admin'))) return new Response(JSON.stringify({ error: 'Incorrect, missing or insufficient login credentials' }), {
 		status: 401, headers: {
-			...adHeaders,
-			['WWW-Authenticate']: 'Bearer realm="Admin Credentials Required"'
+			...tHeaders, ['WWW-Authenticate']: 'Bearer realm="Admin Credentials Required"'
 		}
-	});
-	// Authenticate that user is admin
-	const admin = await userDB.get(`admin:${user}`, { type: 'json' });
-	if (!admin) return new Response(JSON.stringify({ error: 'Admin privileges required' }), {
-		status: 403,
-		headers: dHeaders
 	});
 
 	const body = await request.json();
@@ -143,19 +135,12 @@ export async function questionDel(request) {
 	} catch (e) {
 		return new Response(JSON.stringify({ error: 'Database error' }), { status: 502, headers: dHeaders });
 	}
-	// Fetch username from JWT
-	const user = await validateJWT(request, userDB);
-	if (!user) return new Response(JSON.stringify({ error: 'Incorrect or missing login credentials' }), {
+
+	// Validate user access
+	if (!(await validateJWT(request, userDB, 'admin'))) return new Response(JSON.stringify({ error: 'Incorrect, missing or insufficient login credentials' }), {
 		status: 401, headers: {
-			...dHeaders,
-			['WWW-Authenticate']: 'Bearer realm="Admin Credentials Required"'
+			...tHeaders, ['WWW-Authenticate']: 'Bearer realm="Admin Credentials Required"'
 		}
-	});
-	// Authenticate that user is admin
-	const admin = await userDB.get(`admin:${user}`, { type: 'json' });
-	if (!admin) return new Response(JSON.stringify({ error: 'Admin privileges required' }), {
-		status: 403,
-		headers: dHeaders
 	});
 
 	try {
