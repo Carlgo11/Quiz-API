@@ -14,6 +14,7 @@ router.all('/api/answers', () => new Response(null, { status: 405, headers: aHea
 
 // Questions
 router.get('/api/questions', async (request) => await questionsGet(request));
+router.get('/api/questions/:question', async (request) => await questionsGet(request));
 router.put('/api/questions', async (request) => await questionsPut(request));
 router.delete('/api/questions/:question', async (request) => await questionDel(request));
 router.options('/api/questions', () => new Response(null, { status: 204, headers: qHeaders }));

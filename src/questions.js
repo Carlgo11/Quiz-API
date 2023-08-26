@@ -20,7 +20,7 @@ export const dHeaders = {
 	'Cache-Control': 'private'
 };
 
-async function getAvailableQuestions(questionDB) {
+async function getAllOptions(questionDB) {
 	try {
 		let questions = {};
 		for (const k of (await questionDB.list({ prefix: 'question:', type: 'json' })).keys) {
@@ -32,6 +32,14 @@ async function getAvailableQuestions(questionDB) {
 		console.log(error);
 	}
 	return {};
+}
+
+async function getOptions(question, questionDB) {
+	try {
+		return { [question]: (await questionDB.get(`question:${question}`, { type: 'json' })).options };
+	} catch (e) {
+		return false;
+	}
 }
 
 // GET request
@@ -62,7 +70,19 @@ export async function questionsGet(request) {
 		headers: headers
 	});
 
-	return new Response(JSON.stringify(await getAvailableQuestions(questionDB)), { headers: qHeaders });
+	const question = request.params.question;
+	// If a specific question is requested, return only that question's options
+	let options;
+	if (question) {
+		options = await getOptions(question, questionDB);
+	} else {
+		options = await getAllOptions(questionDB);
+	}
+	// Return 404 if no options could be found
+	if (!options) return new Response(null, { status: 404, headers: qHeaders });
+
+	// Return options
+	return new Response(JSON.stringify(options), { headers: qHeaders });
 }
 
 // PUT request
@@ -80,7 +100,6 @@ export async function questionsPut(request) {
 	try {
 		questionDB = QUESTIONS;
 		userDB = USERS;
-
 	} catch (e) {
 		return new Response(JSON.stringify({ error: 'Database error' }), { status: 502, headers: qHeaders });
 	}
