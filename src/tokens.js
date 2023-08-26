@@ -11,7 +11,7 @@ export async function validateJWT(token, userDB, expected_type = null) {
 	const { sub: user, aud } = jwt.decode(token).payload;
 
 	// Fetch user only from expected user type if type is set
-	const types = expected_type || ['user', 'admin'];
+	const types = expected_type ? [expected_type] : ['user', 'admin'];
 	for (const type of types) {
 		try {
 			const { secret } = await userDB.get(`${type}:${user}`, { type: 'json' });
@@ -19,7 +19,7 @@ export async function validateJWT(token, userDB, expected_type = null) {
 				// Return false on unexpected user type (aud)
 				return (expected_type === null || expected_type === aud) ? user : false;
 		} catch (error) {
-			console.error(error);
+			// console.debug(error)
 		}
 	}
 
